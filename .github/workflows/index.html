@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KasirNota Pro — Laundry & Persewaan Stroller</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono-nota { font-family: 'JetBrains Mono', monospace; }
+
+    /* Print styling */
+    @media print {
+      body * { visibility: hidden; }
+      #print-area, #print-area * { visibility: visible; }
+      #print-area {
+        position: fixed;
+        left: 0;
+        top: 0;
+        margin: 0 !important;
+        padding: 8px !important;
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      .no-print { display: none !important; }
+      @page { margin: 4mm; }
+    }
+
+    /* Paper width previews */
+    .paper-58mm { width: 58mm; min-height: 120mm; font-size: 10px; line-height: 1.35; }
+    .paper-80mm { width: 80mm; min-height: 140mm; font-size: 11px; line-height: 1.4; }
+    .paper-a5   { width: 148mm; min-height: 180mm; font-size: 12.5px; line-height: 1.45; }
+    .paper-a4   { width: 210mm; min-height: 240mm; font-size: 13.5px; line-height: 1.5; }
+  
+    /* Android app menu replaces the compact desktop toolbar controls */
+    header > div > div:nth-child(2), header > div > div:nth-child(3) { display: none !important; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+
+  <!-- TOP NAVBAR -->
+  <header class="no-print bg-white border-b border-slate-200 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
+          KN
+        </div>
+        <div>
+          <h1 id="header-app-title" class="text-lg font-extrabold tracking-tight text-slate-900">KasirNota Pro</h1>
+          <p class="text-xs text-slate-500">Aplikasi Nota Terpadu Laundry & Persewaan Stroller</p>
+        </div>
+      </div>
+
+      <!-- Mode Switcher -->
+      <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+        <button id="btn-mode-laundry" onclick="switchMode('laundry')"
+          class="px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2 bg-indigo-600 text-white shadow-sm">
+          <span>🧺</span> Mode Laundry
+        </button>
+        <button id="btn-mode-rental" onclick="switchMode('rental')"
+          class="px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2 text-slate-600 hover:text-slate-900">
+          <span>🛒</span> Persewaan Barang
+        </button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <button onclick="openSettingsModal()"
+          class="px-3.5 py-2 rounded-xl text-sm font-semibold bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 transition flex items-center gap-1.5">
+          <span>⚙️</span> Pengaturan & Katalog
+        </button>
+        <button onclick="toggleHistoryModal()"
+          class="px-3.5 py-2 rounded-xl text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1.5">
+          <span>📋</span> Riwayat (<span id="history-count">0</span>)
+        </button>
+        <button onclick="resetForm()"
+          class="px-3.5 py-2 rounded-xl text-sm font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 transition">
+          + Nota Baru
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CUSTOMIZABLE APP MENU -->
+  <section class="no-print max-w-7xl mx-auto px-4 sm:px-6 pt-4">
+    <div class="bg-white rounded-2xl border border-slate-200 p-3 shadow-sm">
+      <div class="flex items-center justify-between gap-2 mb-3">
+        <div><div class="text-sm font-bold text-slate-800">Menu Aplikasi</div><div class="text-xs text-slate-500">Menu dapat diubah melalui Atur Menu</div></div>
+        <button onclick="openAppMenuEditor()" class="px-3 py-2 rounded-xl bg-amber-100 text-amber-900 text-xs font-bold">⚙ Atur Menu</button>
+      </div>
+      <div id="custom-app-menu" class="grid grid-cols-2 sm:grid-cols-5 gap-2"></div>
+    </div>
+  </section>
+
+  <div id="app-menu-editor" class="hidden no-print fixed inset-0 z-[80] bg-slate-900/50 p-3 sm:p-6 overflow-y-auto">
+    <div class="max-w-xl mx-auto mt-4 bg-white rounded-2xl shadow-xl p-4 sm:p-6">
+      <div class="flex items-center justify-between mb-2"><h2 class="text-lg font-extrabold">Atur Menu Aplikasi</h2><button onclick="closeAppMenuEditor()" class="text-2xl">&times;</button></div>
+      <p class="text-xs text-slate-500 mb-4">Ubah nama, ikon, tampil/sembunyi, dan urutan menu. Pengaturan tersimpan di HP ini.</p>
+      <div id="app-menu-editor-list" class="space-y-2"></div>
+      <div class="flex gap-2 mt-5"><button onclick="saveAppMenuEditor()" class="flex-1 px-4 py-3 rounded-xl bg-indigo-600 text-white font-bold">Simpan Menu</button><button onclick="resetAppMenuEditor()" class="px-4 py-3 rounded-xl bg-slate-100 font-semibold">Default</button></div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- LEFT COLUMN: INPUT FORM (7 cols) -->
+    <section class="no-print lg:col-span-7 space-y-5">
+
+      <!-- Business Profile Card -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500">1. Profil Usaha (Aktif Sesuai Mode)</h2>
+          <span id="badge-mode-label" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700">
+            Laundry
+          </span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Nama Usaha</label>
+            <input id="biz-name" type="text" oninput="renderNota()"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">No. HP / WhatsApp</label>
+            <input id="biz-phone" type="text" oninput="renderNota()"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-medium text-slate-600 mb-1">Alamat Outlet / Basecamp</label>
+            <input id="biz-address" type="text" oninput="renderNota()"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Customer & Nota Meta -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">2. Data Pelanggan & Nota</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">No. Nota</label>
+            <input id="nota-no" type="text" oninput="renderNota()"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-mono-nota focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Nama Pelanggan</label>
+            <input id="cust-name" type="text" placeholder="Contoh: Ibu Sarah / Dony" oninput="renderNota()"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">No. WA Pelanggan</label>
+            <input id="cust-phone" type="text" placeholder="0812xxxxxxxx" oninput="renderNota()"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+        </div>
+
+        <!-- LAUNDRY SPECIFIC FIELDS -->
+        <div id="laundry-fields" class="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Tanggal Masuk</label>
+            <input id="laundry-date-in" type="datetime-local" onchange="renderNota()"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Estimasi Selesai</label>
+            <input id="laundry-date-out" type="datetime-local" onchange="renderNota()"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Pilihan Parfum</label>
+            <select id="laundry-parfum" onchange="renderNota()"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+            </select>
+          </div>
+        </div>
+
+        <!-- RENTAL SPECIFIC FIELDS -->
+        <div id="rental-fields" class="hidden mt-4 pt-4 border-t border-slate-100 space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Tanggal Mulai Sewa</label>
+              <input id="rental-start" type="date" onchange="calcRentalDays(); renderNota();"
+                class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Tanggal Kembali</label>
+              <input id="rental-end" type="date" onchange="calcRentalDays(); renderNota();"
+                class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Durasi (Hari)</label>
+              <input id="rental-days" type="number" min="1" value="1" oninput="renderNota()"
+                class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm font-semibold focus:ring-2 focus:ring-indigo-500 outline-none" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Jaminan / Deposit</label>
+              <select id="rental-guarantee" onchange="renderNota()"
+                class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-600 mb-1">Pengambilan / Pengantaran</label>
+              <select id="rental-delivery-mode" onchange="renderNota()"
+                class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="Ambil di Tempat">Ambil di Tempat</option>
+                <option value="Diantar Kurir / Delivery">Diantar Kurir / Delivery</option>
+                <option value="Jemput / Kembali ke Outlet">Jemput / Kembali ke Outlet</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Items Card -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h2 id="items-section-title" class="text-sm font-bold uppercase tracking-wider text-slate-500">3. Daftar Item Laundry</h2>
+          <div class="flex items-center gap-2 flex-wrap">
+            <select id="preset-select" onchange="applyPreset()"
+              class="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-medium bg-slate-50 text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none max-w-[260px]">
+            </select>
+            <button onclick="addItemRow()"
+              class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition">
+              + Baris Item
+            </button>
+          </div>
+        </div>
+
+        <div id="items-container" class="space-y-2.5"></div>
+      </div>
+
+      <!-- Payment & Notes Card -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">4. Pembayaran & Catatan</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Diskon (Rp)</label>
+            <input id="discount-input" type="number" min="0" value="0" oninput="renderNota()"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+          <div>
+            <label id="extra-fee-label" class="block text-xs font-medium text-slate-600 mb-1">Biaya Antar / Lainnya (Rp)</label>
+            <input id="extra-fee-input" type="number" min="0" value="0" oninput="renderNota()"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">DP / Bayar (Rp)</label>
+            <input id="paid-input" type="number" min="0" value="0" oninput="renderNota()"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Status Bayar</label>
+            <select id="payment-status" onchange="renderNota()"
+              class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option value="LUNAS">LUNAS</option>
+              <option value="DP / SEBAGIAN">DP / SEBAGIAN</option>
+              <option value="BELUM BAYAR">BELUM BAYAR</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label class="block text-xs font-medium text-slate-600 mb-1">Catatan / Syarat & Ketentuan di Nota</label>
+          <textarea id="notes-input" rows="2" oninput="renderNota()"
+            class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+        </div>
+
+        <!-- Save & Print Actions -->
+        <div class="mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <label class="text-xs font-semibold text-slate-600">Ukuran Kertas:</label>
+            <select id="paper-size" onchange="changePaperSize()"
+              class="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-semibold bg-slate-50 focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option value="58mm">Thermal 58mm</option>
+              <option value="80mm">Thermal 80mm</option>
+              <option value="a5" selected>Kertas A5</option>
+              <option value="a4">Kertas A4</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="saveTransaction()"
+              class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition">
+              💾 Simpan Nota
+            </button>
+            <button onclick="sendWhatsApp()"
+              class="px-4 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold shadow-sm transition">
+              📲 Kirim WA
+            </button>
+            <button onclick="printNota()"
+              class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold shadow-sm transition">
+              🖨️ Cetak Nota
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: LIVE NOTA PREVIEW (5 cols) -->
+    <section class="lg:col-span-5 flex flex-col items-center">
+      <div class="no-print w-full flex items-center justify-between mb-3 px-1">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Pratinjau Cetak Nota</span>
+        <span class="text-xs text-slate-400">Otomatis menyesuaikan ukuran kertas</span>
+      </div>
+
+      <div class="w-full overflow-x-auto pb-6 flex justify-center">
+        <div id="print-area" class="paper-a5 bg-white text-slate-900 border border-slate-300 rounded-xl shadow-md p-5 font-mono-nota transition-all">
+          <!-- Nota Header -->
+          <div class="text-center border-b border-dashed border-slate-400 pb-3 mb-3">
+            <div id="preview-biz-name" class="text-base font-bold uppercase tracking-wide">BeningKilat Laundry</div>
+            <div id="preview-biz-address" class="text-[0.85em] text-slate-600 mt-0.5">Jl. Raya Darmo No. 45, Surabaya</div>
+            <div id="preview-biz-phone" class="text-[0.85em] text-slate-600">WA: 0812-3456-7890</div>
+          </div>
+
+          <!-- Nota Info -->
+          <div class="space-y-1 text-[0.9em] border-b border-dashed border-slate-400 pb-2.5 mb-2.5">
+            <div class="flex justify-between gap-2">
+              <span>No. Nota:</span>
+              <span id="preview-nota-no" class="font-bold">LDR-001</span>
+            </div>
+            <div class="flex justify-between gap-2">
+              <span>Pelanggan:</span>
+              <span id="preview-cust-name" class="font-semibold text-right">-</span>
+            </div>
+            <div class="flex justify-between gap-2">
+              <span>No. WA:</span>
+              <span id="preview-cust-phone" class="text-right">-</span>
+            </div>
+            <div id="preview-meta-extra" class="space-y-1 pt-1"></div>
+          </div>
+
+          <!-- Items Table -->
+          <div class="border-b border-dashed border-slate-400 pb-2.5 mb-2.5">
+            <div class="flex justify-between font-bold text-[0.88em] pb-1 border-b border-slate-200 mb-1.5">
+              <span>Item / Keterangan</span>
+              <span>Subtotal</span>
+            </div>
+            <div id="preview-items-list" class="space-y-2 text-[0.9em]"></div>
+          </div>
+
+          <!-- Totals -->
+          <div class="space-y-1 text-[0.92em] border-b border-dashed border-slate-400 pb-2.5 mb-3">
+            <div class="flex justify-between">
+              <span>Subtotal</span>
+              <span id="preview-subtotal">Rp0</span>
+            </div>
+            <div id="preview-duration-row" class="hidden justify-between text-slate-700">
+              <span>Durasi Sewa</span>
+              <span id="preview-duration-val">1 Hari</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Diskon</span>
+              <span id="preview-discount">-Rp0</span>
+            </div>
+            <div class="flex justify-between">
+              <span id="preview-extra-label">Biaya Lain</span>
+              <span id="preview-extra-fee">Rp0</span>
+            </div>
+            <div class="flex justify-between font-bold text-[1.08em] pt-1 border-t border-slate-200">
+              <span>TOTAL</span>
+              <span id="preview-total">Rp0</span>
+            </div>
+            <div class="flex justify-between text-[0.9em]">
+              <span>DP / Dibayar</span>
+              <span id="preview-paid">Rp0</span>
+            </div>
+            <div class="flex justify-between font-semibold text-[0.92em]">
+              <span>Sisa / Kembali</span>
+              <span id="preview-balance">Rp0</span>
+            </div>
+            <div class="flex justify-between items-center pt-1">
+              <span>Status:</span>
+              <span id="preview-status" class="font-bold px-2 py-0.5 border border-slate-800 rounded text-[0.85em]">LUNAS</span>
+            </div>
+          </div>
+
+          <!-- Notes & Footer -->
+          <div class="text-[0.83em] text-slate-700 space-y-2">
+            <div>
+              <div class="font-bold">Catatan:</div>
+              <div id="preview-notes" class="whitespace-pre-line text-slate-600">-</div>
+            </div>
+            <div class="text-center pt-2 border-t border-dashed border-slate-300 text-[0.85em]">
+              Terima kasih atas kepercayaan Anda!
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- SETTINGS & CATALOG MODAL -->
+  <div id="settings-modal" class="no-print hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900">Pengaturan Usaha & Katalog Lengkap</h3>
+          <p class="text-xs text-slate-500">Semua perubahan tersimpan otomatis di browser Anda</p>
+        </div>
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+      </div>
+
+      <!-- Settings Tabs -->
+      <div class="px-6 pt-3 border-b border-slate-200 flex gap-2 overflow-x-auto bg-white">
+        <button id="stab-profiles" onclick="switchSettingsTab('profiles')"
+          class="px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 border-indigo-600 text-indigo-700 bg-indigo-50/50 whitespace-nowrap">
+          🏪 Profil Usaha
+        </button>
+        <button id="stab-rental" onclick="switchSettingsTab('rental')"
+          class="px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">
+          🛒 Katalog Stroller & Sewa
+        </button>
+        <button id="stab-laundry" onclick="switchSettingsTab('laundry')"
+          class="px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">
+          🧺 Katalog Laundry
+        </button>
+        <button id="stab-options" onclick="switchSettingsTab('options')"
+          class="px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap">
+          ⚙️ Parfum, Jaminan & Backup
+        </button>
+      </div>
+
+      <!-- Settings Body -->
+      <div class="p-6 overflow-y-auto space-y-6 flex-1">
+
+        <!-- TAB 1: PROFILES -->
+        <div id="spanel-profiles" class="space-y-6">
+          <div class="p-4 rounded-xl border border-indigo-100 bg-indigo-50/40 space-y-3">
+            <h4 class="text-sm font-bold text-indigo-950">Profil Usaha Mode Laundry</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Nama Laundry</label>
+                <input id="cfg-laundry-name" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">No. WA Laundry</label>
+                <input id="cfg-laundry-phone" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Awalan No. Nota</label>
+                <input id="cfg-laundry-prefix" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white" />
+              </div>
+              <div class="sm:col-span-3">
+                <label class="block text-xs font-medium text-slate-600 mb-1">Alamat Laundry</label>
+                <input id="cfg-laundry-address" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white" />
+              </div>
+              <div class="sm:col-span-3">
+                <label class="block text-xs font-medium text-slate-600 mb-1">Catatan Default Nota Laundry</label>
+                <input id="cfg-laundry-notes" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white" />
+              </div>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl border border-emerald-100 bg-emerald-50/40 space-y-3">
+            <h4 class="text-sm font-bold text-emerald-950">Profil Usaha Mode Persewaan Barang (Stroller)</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Nama Usaha Sewa</label>
+                <input id="cfg-rental-name" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">No. WA Sewa</label>
+                <input id="cfg-rental-phone" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Awalan No. Nota</label>
+                <input id="cfg-rental-prefix" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white" />
+              </div>
+              <div class="sm:col-span-3">
+                <label class="block text-xs font-medium text-slate-600 mb-1">Alamat Basecamp / Outlet Sewa</label>
+                <input id="cfg-rental-address" type="text" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white" />
+              </div>
+              <div class="sm:col-span-3">
+                <label class="block text-xs font-medium text-slate-600 mb-1">Syarat & Ketentuan Default Sewa Stroller</label>
+                <textarea id="cfg-rental-notes" rows="2" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: RENTAL CATALOG (STROLLER) -->
+        <div id="spanel-rental" class="hidden space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h4 class="text-sm font-bold text-slate-800">Daftar Barang Stroller & Paket Sewa</h4>
+              <p class="text-xs text-slate-500">Tambah, ubah tarif harian/mingguan, atau hapus item stroller sesuai stok Anda.</p>
+            </div>
+            <button onclick="addRentalCatalogRow()" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold">
+              + Tambah Barang Stroller
+            </button>
+          </div>
+          <div id="cfg-rental-catalog-list" class="space-y-2.5"></div>
+        </div>
+
+        <!-- TAB 3: LAUNDRY CATALOG -->
+        <div id="spanel-laundry" class="hidden space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h4 class="text-sm font-bold text-slate-800">Daftar Layanan Laundry & Cuci Stroller</h4>
+              <p class="text-xs text-slate-500">Atur harga per Kg, Pcs, Set, atau Unit untuk pilihan cepat di form nota.</p>
+            </div>
+            <button onclick="addLaundryCatalogRow()" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold">
+              + Tambah Layanan Laundry
+            </button>
+          </div>
+          <div id="cfg-laundry-catalog-list" class="space-y-2.5"></div>
+        </div>
+
+        <!-- TAB 4: OPTIONS & BACKUP -->
+        <div id="spanel-options" class="hidden space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Daftar Parfum Laundry (pisahkan dengan koma)</label>
+              <textarea id="cfg-parfum-list" rows="3" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm"></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Daftar Opsi Jaminan Sewa (pisahkan dengan koma)</label>
+              <textarea id="cfg-guarantee-list" rows="3" class="w-full px-3 py-2 rounded-xl border border-slate-300 text-sm"></textarea>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h5 class="text-sm font-bold text-slate-800">Backup & Restore Data (JSON)</h5>
+              <p class="text-xs text-slate-500">Simpan cadangan katalog, profil usaha, dan riwayat nota atau pulihkan dari file.</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button onclick="exportBackupJSON()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold">
+                ⬇️ Export Backup JSON
+              </button>
+              <label class="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-semibold cursor-pointer">
+                ⬆️ Import JSON
+                <input type="file" accept=".json" onchange="importBackupJSON(event)" class="hidden" />
+              </label>
+              <button onclick="resetDefaultConfig()" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold">
+                ↺ Reset Default
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Settings Footer -->
+      <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-3">
+        <button onclick="closeSettingsModal()" class="px-4 py-2 rounded-xl border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-white">
+          Batal
+        </button>
+        <button onclick="saveSettingsFromModal()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm">
+          Simpan Semua Pengaturan
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY MODAL -->
+  <div id="history-modal" class="no-print hidden fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="text-lg font-bold text-slate-900">Riwayat Nota Tersimpan</h3>
+        <button onclick="toggleHistoryModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+      </div>
+      <div id="history-list" class="p-6 overflow-y-auto space-y-3 flex-1"></div>
+      <div class="px-6 py-3 border-t border-slate-200 bg-slate-50 flex justify-between items-center">
+        <button onclick="clearHistory()" class="text-xs font-semibold text-rose-600 hover:underline">Hapus Semua Riwayat</button>
+        <button onclick="toggleHistoryModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-white text-sm font-semibold">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY_HISTORY = 'kasirnota_pro_history_v2';
+    const STORAGE_KEY_CONFIG  = 'kasirnota_pro_config_v2';
+
+    const DEFAULT_CONFIG = {
+      profiles: {
+        laundry: {
+          name: 'BeningKilat Laundry',
+          phone: '0812-3456-7890',
+          address: 'Jl. Raya Darmo No. 45, Surabaya',
+          prefix: 'LDR',
+          notes: 'Pengambilan nota wajib disertakan. Komplain maksimal 1x24 jam setelah pengambilan.'
+        },
+        rental: {
+          name: 'LittleStep Stroller & Baby Rental',
+          phone: '0813-9876-5432',
+          address: 'Jl. Manyar Kertoarjo No. 18, Surabaya',
+          prefix: 'RNT',
+          notes: 'Wajib cek kondisi & kelengkapan stroller saat serah terima. Keterlambatan pengembalian dikenakan denda harian.'
+        }
+      },
+      laundryCatalog: [
+        { name: 'Cuci Komplit (Cuci + Kering + Setrika)', unit: 'Kg', price: 8000 },
+        { name: 'Cuci Setrika Express (1 Hari)', unit: 'Kg', price: 12000 },
+        { name: 'Setrika Saja', unit: 'Kg', price: 5000 },
+        { name: 'Bedcover / Selimut Tebal', unit: 'Pcs', price: 25000 },
+        { name: 'Cuci & Sanitasi Stroller Bayi', unit: 'Unit', price: 55000 },
+        { name: 'Cuci Car Seat / High Chair Bayi', unit: 'Unit', price: 50000 }
+      ],
+      rentalCatalog: [
+        { name: 'Stroller Cocolatte Pockit (+ Tas & Kanopi)', unit: 'Hari', price: 35000 },
+        { name: 'Stroller Cocolatte Pockit (Paket 7 Hari)', unit: 'Paket', price: 165000 },
+        { name: 'Stroller Joie Pact Lite (+ Tas & Bumper)', unit: 'Hari', price: 40000 },
+        { name: 'Stroller Joie Pact Lite (Paket 7 Hari)', unit: 'Paket', price: 160000 },
+        { name: 'Stroller Babyzen Yoyo2 6+ (+ Tas Sarung)', unit: 'Hari', price: 45000 },
+        { name: 'Stroller Babyzen Yoyo2 6+ (Paket 7 Hari)', unit: 'Paket', price: 250000 },
+        { name: 'Stroller Hamilton X1 Plus (+ Travel Bag)', unit: 'Hari', price: 40000 },
+        { name: 'Stroller Baobaohao V8/V18+ 2 Arah', unit: 'Hari', price: 30000 },
+        { name: 'Stroller Baobaohao V8/V18+ (Paket 7 Hari)', unit: 'Paket', price: 115000 },
+        { name: 'Stroller Cocolatte Conic Auto (+ Seat Pad)', unit: 'Hari', price: 45000 },
+        { name: 'Magic Stroller / Trike (+ Pijakan & Pengaman)', unit: 'Hari', price: 22000 },
+        { name: 'Stroller Kembar / Twin (+ Kanopi Ganda)', unit: 'Hari', price: 45000 }
+      ],
+      parfums: ['Sakura Fresh', 'Snappy / Blue', 'Lavender Soft', 'Tanpa Parfum'],
+      guarantees: [
+        'KTP Asli + Deposit Rp100.000',
+        'KTP Asli',
+        'SIM A / C + Deposit Rp100.000',
+        'KIA / KK + Deposit Rp150.000',
+        'Deposit Tunai Rp200.000'
+      ]
+    };
+
+    let config = loadConfig();
+    let currentMode = 'laundry';
+    let draftRentalCatalog = [];
+    let draftLaundryCatalog = [];
+
+    function clone(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function loadConfig() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_CONFIG);
+        if (!raw) return clone(DEFAULT_CONFIG);
+        const parsed = JSON.parse(raw);
+        return {
+          profiles: {
+            laundry: { ...DEFAULT_CONFIG.profiles.laundry, ...(parsed.profiles?.laundry || {}) },
+            rental: { ...DEFAULT_CONFIG.profiles.rental, ...(parsed.profiles?.rental || {}) }
+          },
+          laundryCatalog: Array.isArray(parsed.laundryCatalog) && parsed.laundryCatalog.length ? parsed.laundryCatalog : clone(DEFAULT_CONFIG.laundryCatalog),
+          rentalCatalog: Array.isArray(parsed.rentalCatalog) && parsed.rentalCatalog.length ? parsed.rentalCatalog : clone(DEFAULT_CONFIG.rentalCatalog),
+          parfums: Array.isArray(parsed.parfums) && parsed.parfums.length ? parsed.parfums : [...DEFAULT_CONFIG.parfums],
+          guarantees: Array.isArray(parsed.guarantees) && parsed.guarantees.length ? parsed.guarantees : [...DEFAULT_CONFIG.guarantees]
+        };
+      } catch {
+        return clone(DEFAULT_CONFIG);
+      }
+    }
+
+    function persistConfig() {
+      localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(config));
+    }
+
+    function formatRupiah(num) {
+      const n = Number(num) || 0;
+      return 'Rp' + Math.round(n).toLocaleString('id-ID');
+    }
+
+    function toDatetimeLocalValue(dateObj) {
+      const pad = (v) => String(v).padStart(2, '0');
+      return `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(dateObj.getDate())}T${pad(dateObj.getHours())}:${pad(dateObj.getMinutes())}`;
+    }
+
+    function toDateInputValue(dateObj) {
+      const pad = (v) => String(v).padStart(2, '0');
+      return `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(dateObj.getDate())}`;
+    }
+
+    function formatReadableDateTime(val) {
+      if (!val) return '-';
+      const d = new Date(val);
+      if (isNaN(d.getTime())) return val;
+      return d.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+    }
+
+    function formatReadableDate(val) {
+      if (!val) return '-';
+      const d = new Date(val + 'T00:00:00');
+      if (isNaN(d.getTime())) return val;
+      return d.toLocaleDateString('id-ID', { dateStyle: 'medium' });
+    }
+
+    function generateNotaNumber(mode) {
+      const prefix = config.profiles[mode]?.prefix || (mode === 'laundry' ? 'LDR' : 'RNT');
+      const rand = Math.floor(100 + Math.random() * 900);
+      const now = new Date();
+      const ym = `${String(now.getFullYear()).slice(-2)}${String(now.getMonth() + 1).padStart(2, '0')}`;
+      return `${prefix}-${ym}-${rand}`;
+    }
+
+    function populateDropdowns() {
+      const parfumSel = document.getElementById('laundry-parfum');
+      const currentParfum = parfumSel.value;
+      parfumSel.innerHTML = config.parfums.map(p => `<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join('');
+      if (currentParfum && config.parfums.includes(currentParfum)) parfumSel.value = currentParfum;
+
+      const guarSel = document.getElementById('rental-guarantee');
+      const currentGuar = guarSel.value;
+      guarSel.innerHTML = config.guarantees.map(g => `<option value="${escapeAttr(g)}">${escapeHtml(g)}</option>`).join('');
+      if (currentGuar && config.guarantees.includes(currentGuar)) guarSel.value = currentGuar;
+
+      populatePresetDropdown();
+    }
+
+    function populatePresetDropdown() {
+      const select = document.getElementById('preset-select');
+      const catalog = currentMode === 'laundry' ? config.laundryCatalog : config.rentalCatalog;
+      const label = currentMode === 'laundry' ? '-- Pilih Layanan Laundry --' : '-- Pilih Stroller / Paket Sewa --';
+      select.innerHTML = `<option value="">${label}</option>` +
+        catalog.map((item, idx) =>
+          `<option value="${idx}">${escapeHtml(item.name)} (${formatRupiah(item.price)}/${escapeHtml(item.unit)})</option>`
+        ).join('');
+    }
+
+    function applyProfileForMode(mode) {
+      const prof = config.profiles[mode];
+      document.getElementById('biz-name').value = prof.name;
+      document.getElementById('biz-phone').value = prof.phone;
+      document.getElementById('biz-address').value = prof.address;
+      document.getElementById('notes-input').value = prof.notes;
+    }
+
+    function switchMode(mode) {
+      currentMode = mode;
+      const btnLaundry = document.getElementById('btn-mode-laundry');
+      const btnRental = document.getElementById('btn-mode-rental');
+      const badge = document.getElementById('badge-mode-label');
+      const laundryFields = document.getElementById('laundry-fields');
+      const rentalFields = document.getElementById('rental-fields');
+      const itemsTitle = document.getElementById('items-section-title');
+      const extraLabel = document.getElementById('extra-fee-label');
+
+      if (mode === 'laundry') {
+        btnLaundry.className = 'px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2 bg-indigo-600 text-white shadow-sm';
+        btnRental.className = 'px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2 text-slate-600 hover:text-slate-900';
+        badge.textContent = 'Laundry';
+        badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700';
+        laundryFields.classList.remove('hidden');
+        rentalFields.classList.add('hidden');
+        itemsTitle.textContent = '3. Daftar Item Laundry';
+        extraLabel.textContent = 'Biaya Antar / Lainnya (Rp)';
+      } else {
+        btnRental.className = 'px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2 bg-emerald-600 text-white shadow-sm';
+        btnLaundry.className = 'px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2 text-slate-600 hover:text-slate-900';
+        badge.textContent = 'Persewaan Barang';
+        badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700';
+        laundryFields.classList.add('hidden');
+        rentalFields.classList.remove('hidden');
+        itemsTitle.textContent = '3. Daftar Barang / Stroller Disewa';
+        extraLabel.textContent = 'Ongkir / Delivery (Rp)';
+      }
+
+      applyProfileForMode(mode);
+      populatePresetDropdown();
+      document.getElementById('nota-no').value = generateNotaNumber(mode);
+      resetItemsForMode(mode);
+      renderNota();
+    }
+
+    function resetItemsForMode(mode) {
+      const container = document.getElementById('items-container');
+      container.innerHTML = '';
+      if (mode === 'laundry') {
+        const first = config.laundryCatalog[0] || { name: 'Cuci Komplit', unit: 'Kg', price: 8000 };
+        addItemRow({ name: first.name, qty: 3, unit: first.unit, price: first.price });
+      } else {
+        const first = config.rentalCatalog[0] || { name: 'Stroller Cocolatte Pockit (+ Tas & Kanopi)', unit: 'Hari', price: 35000 };
+        addItemRow({ name: first.name, qty: 1, unit: first.unit, price: first.price });
+      }
+    }
+
+    function addItemRow(data = {}) {
+      const defaultUnit = currentMode === 'laundry' ? 'Kg' : 'Hari';
+      const item = {
+        name: data.name || '',
+        qty: data.qty ?? 1,
+        unit: data.unit || defaultUnit,
+        price: data.price ?? 0
+      };
+
+      const container = document.getElementById('items-container');
+      const row = document.createElement('div');
+      row.className = 'item-row grid grid-cols-12 gap-2 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200';
+      row.innerHTML = `
+        <div class="col-span-12 sm:col-span-5">
+          <input type="text" placeholder="Nama item / stroller" value="${escapeAttr(item.name)}" oninput="renderNota()"
+            class="item-name w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-sm bg-white outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+        <div class="col-span-4 sm:col-span-2">
+          <input type="number" step="0.1" min="0.1" placeholder="Qty" value="${item.qty}" oninput="renderNota()"
+            class="item-qty w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-sm bg-white outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+        <div class="col-span-4 sm:col-span-2">
+          <input type="text" placeholder="Satuan" value="${escapeAttr(item.unit)}" oninput="renderNota()"
+            class="item-unit w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-sm bg-white outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+        <div class="col-span-3 sm:col-span-2">
+          <input type="number" min="0" placeholder="Harga" value="${item.price}" oninput="renderNota()"
+            class="item-price w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-sm bg-white outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+        <div class="col-span-1 text-right">
+          <button type="button" onclick="removeItemRow(this)" title="Hapus baris"
+            class="text-rose-500 hover:text-rose-700 font-bold text-base px-1.5">&times;</button>
+        </div>
+      `;
+      container.appendChild(row);
+      renderNota();
+    }
+
+    function removeItemRow(btn) {
+      const rows = document.querySelectorAll('.item-row');
+      if (rows.length <= 1) {
+        alert('Minimal harus ada 1 baris item.');
+        return;
+      }
+      btn.closest('.item-row').remove();
+      renderNota();
+    }
+
+    function applyPreset() {
+      const select = document.getElementById('preset-select');
+      const idx = select.value;
+      if (idx === '') return;
+      const catalog = currentMode === 'laundry' ? config.laundryCatalog : config.rentalCatalog;
+      const chosen = catalog[Number(idx)];
+      if (!chosen) return;
+
+      const rows = document.querySelectorAll('.item-row');
+      const lastRow = rows[rows.length - 1];
+      const lastName = lastRow?.querySelector('.item-name')?.value.trim();
+
+      if (rows.length === 1 && !lastName) {
+        lastRow.querySelector('.item-name').value = chosen.name;
+        lastRow.querySelector('.item-unit').value = chosen.unit;
+        lastRow.querySelector('.item-price').value = chosen.price;
+        renderNota();
+      } else {
+        addItemRow({ name: chosen.name, qty: 1, unit: chosen.unit, price: chosen.price });
+      }
+      select.value = '';
+    }
+
+    function calcRentalDays() {
+      const startVal = document.getElementById('rental-start').value;
+      const endVal = document.getElementById('rental-end').value;
+      if (!startVal || !endVal) return;
+      const d1 = new Date(startVal + 'T00:00:00');
+      const d2 = new Date(endVal + 'T00:00:00');
+      const diffTime = d2.getTime() - d1.getTime();
+      const diffDays = Math.max(1, Math.round(diffTime / (1000 * 60 * 60 * 24)));
+      document.getElementById('rental-days').value = diffDays;
+    }
+
+    function getItemsData() {
+      const rows = document.querySelectorAll('.item-row');
+      const items = [];
+      rows.forEach(r => {
+        const name = r.querySelector('.item-name').value.trim() || 'Item tanpa nama';
+        const qty = parseFloat(r.querySelector('.item-qty').value) || 0;
+        const unit = r.querySelector('.item-unit').value.trim() || 'pcs';
+        const price = parseFloat(r.querySelector('.item-price').value) || 0;
+        const subtotal = qty * price;
+        items.push({ name, qty, unit, price, subtotal });
+      });
+      return items;
+    }
+
+    function computeTotals(items) {
+      const itemsSum = items.reduce((acc, it) => acc + it.subtotal, 0);
+      const rentalDays = Math.max(1, parseInt(document.getElementById('rental-days').value, 10) || 1);
+      const hasPerDayItem = currentMode === 'rental' && items.some(it => it.unit.toLowerCase() === 'hari');
+      const rawSubtotal = hasPerDayItem ? itemsSum * rentalDays : itemsSum;
+
+      const discount = Math.max(0, parseFloat(document.getElementById('discount-input').value) || 0);
+      const extraFee = Math.max(0, parseFloat(document.getElementById('extra-fee-input').value) || 0);
+      const total = Math.max(0, rawSubtotal - discount + extraFee);
+      const paid = Math.max(0, parseFloat(document.getElementById('paid-input').value) || 0);
+      const balance = paid - total;
+
+      return { itemsSum, rawSubtotal, rentalDays, hasPerDayItem, discount, extraFee, total, paid, balance };
+    }
+
+    function renderNota() {
+      const bizName = document.getElementById('biz-name').value.trim() || 'Nama Usaha';
+      const bizAddress = document.getElementById('biz-address').value.trim() || '-';
+      const bizPhone = document.getElementById('biz-phone').value.trim() || '-';
+
+      const notaNo = document.getElementById('nota-no').value.trim() || '-';
+      const custName = document.getElementById('cust-name').value.trim() || '-';
+      const custPhone = document.getElementById('cust-phone').value.trim() || '-';
+      const notes = document.getElementById('notes-input').value.trim() || '-';
+      const status = document.getElementById('payment-status').value;
+
+      document.getElementById('preview-biz-name').textContent = bizName;
+      document.getElementById('preview-biz-address').textContent = bizAddress;
+      document.getElementById('preview-biz-phone').textContent = `WA: ${bizPhone}`;
+      document.getElementById('preview-nota-no').textContent = notaNo;
+      document.getElementById('preview-cust-name').textContent = custName;
+      document.getElementById('preview-cust-phone').textContent = custPhone;
+      document.getElementById('preview-notes').textContent = notes;
+      document.getElementById('preview-status').textContent = status;
+
+      const metaExtra = document.getElementById('preview-meta-extra');
+      if (currentMode === 'laundry') {
+        const dIn = formatReadableDateTime(document.getElementById('laundry-date-in').value);
+        const dOut = formatReadableDateTime(document.getElementById('laundry-date-out').value);
+        const parfum = document.getElementById('laundry-parfum').value;
+        metaExtra.innerHTML = `
+          <div class="flex justify-between gap-2"><span>Masuk:</span><span class="text-right">${dIn}</span></div>
+          <div class="flex justify-between gap-2"><span>Est. Selesai:</span><span class="text-right">${dOut}</span></div>
+          <div class="flex justify-between gap-2"><span>Parfum:</span><span class="text-right">${escapeHtml(parfum)}</span></div>
+        `;
+      } else {
+        const rStart = formatReadableDate(document.getElementById('rental-start').value);
+        const rEnd = formatReadableDate(document.getElementById('rental-end').value);
+        const rDays = Math.max(1, parseInt(document.getElementById('rental-days').value, 10) || 1);
+        const guar = document.getElementById('rental-guarantee').value;
+        const deliv = document.getElementById('rental-delivery-mode').value;
+        metaExtra.innerHTML = `
+          <div class="flex justify-between gap-2"><span>Periode:</span><span class="text-right">${rStart} - ${rEnd}</span></div>
+          <div class="flex justify-between gap-2"><span>Durasi:</span><span class="font-semibold text-right">${rDays} Hari</span></div>
+          <div class="flex justify-between gap-2"><span>Jaminan:</span><span class="text-right">${escapeHtml(guar)}</span></div>
+          <div class="flex justify-between gap-2"><span>Pengambilan:</span><span class="text-right">${escapeHtml(deliv)}</span></div>
+        `;
+      }
+
+      const items = getItemsData();
+      const listEl = document.getElementById('preview-items-list');
+      listEl.innerHTML = items.map(it => `
+        <div>
+          <div class="flex justify-between gap-2 font-medium">
+            <span>${escapeHtml(it.name)}</span>
+            <span>${formatRupiah(it.subtotal)}</span>
+          </div>
+          <div class="text-[0.82em] text-slate-500">
+            ${it.qty} ${escapeHtml(it.unit)} &times; ${formatRupiah(it.price)}
+          </div>
+        </div>
+      `).join('');
+
+      const t = computeTotals(items);
+      document.getElementById('preview-subtotal').textContent = formatRupiah(t.rawSubtotal);
+
+      const durRow = document.getElementById('preview-duration-row');
+      if (currentMode === 'rental') {
+        durRow.classList.remove('hidden');
+        durRow.classList.add('flex');
+        document.getElementById('preview-duration-val').textContent = `${t.rentalDays} Hari${t.hasPerDayItem ? ' (x item/hari)' : ''}`;
+      } else {
+        durRow.classList.add('hidden');
+        durRow.classList.remove('flex');
+      }
+
+      document.getElementById('preview-discount').textContent = `-${formatRupiah(t.discount)}`;
+      document.getElementById('preview-extra-label').textContent = currentMode === 'rental' ? 'Ongkir / Delivery' : 'Biaya Lain';
+      document.getElementById('preview-extra-fee').textContent = formatRupiah(t.extraFee);
+      document.getElementById('preview-total').textContent = formatRupiah(t.total);
+      document.getElementById('preview-paid').textContent = formatRupiah(t.paid);
+
+      const balEl = document.getElementById('preview-balance');
+      if (t.balance >= 0) {
+        balEl.textContent = `Kembali ${formatRupiah(t.balance)}`;
+      } else {
+        balEl.textContent = `Kurang ${formatRupiah(Math.abs(t.balance))}`;
+      }
+    }
+
+    function changePaperSize() {
+      const size = document.getElementById('paper-size').value;
+      const area = document.getElementById('print-area');
+      area.classList.remove('paper-58mm', 'paper-80mm', 'paper-a5', 'paper-a4');
+      area.classList.add(`paper-${size}`);
+    }
+
+    function printNota() {
+      renderNota();
+      window.print();
+    }
+
+    /* SETTINGS MODAL LOGIC */
+    function openSettingsModal() {
+      document.getElementById('cfg-laundry-name').value = config.profiles.laundry.name;
+      document.getElementById('cfg-laundry-phone').value = config.profiles.laundry.phone;
+      document.getElementById('cfg-laundry-prefix').value = config.profiles.laundry.prefix;
+      document.getElementById('cfg-laundry-address').value = config.profiles.laundry.address;
+      document.getElementById('cfg-laundry-notes').value = config.profiles.laundry.notes;
+
+      document.getElementById('cfg-rental-name').value = config.profiles.rental.name;
+      document.getElementById('cfg-rental-phone').value = config.profiles.rental.phone;
+      document.getElementById('cfg-rental-prefix').value = config.profiles.rental.prefix;
+      document.getElementById('cfg-rental-address').value = config.profiles.rental.address;
+      document.getElementById('cfg-rental-notes').value = config.profiles.rental.notes;
+
+      draftRentalCatalog = clone(config.rentalCatalog);
+      draftLaundryCatalog = clone(config.laundryCatalog);
+      renderRentalCatalogEditor();
+      renderLaundryCatalogEditor();
+
+      document.getElementById('cfg-parfum-list').value = config.parfums.join(', ');
+      document.getElementById('cfg-guarantee-list').value = config.guarantees.join(', ');
+
+      switchSettingsTab('profiles');
+      document.getElementById('settings-modal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    function switchSettingsTab(tab) {
+      const tabs = ['profiles', 'rental', 'laundry', 'options'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`stab-${t}`);
+        const panel = document.getElementById(`spanel-${t}`);
+        if (t === tab) {
+          btn.className = 'px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 border-indigo-600 text-indigo-700 bg-indigo-50/50 whitespace-nowrap';
+          panel.classList.remove('hidden');
+        } else {
+          btn.className = 'px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 border-transparent text-slate-500 hover:text-slate-800 whitespace-nowrap';
+          panel.classList.add('hidden');
+        }
+      });
+    }
+
+    function renderRentalCatalogEditor() {
+      const el = document.getElementById('cfg-rental-catalog-list');
+      el.innerHTML = draftRentalCatalog.map((item, idx) => `
+        <div class="grid grid-cols-12 gap-2 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+          <div class="col-span-12 sm:col-span-6">
+            <input type="text" value="${escapeAttr(item.name)}" oninput="draftRentalCatalog[${idx}].name = this.value"
+              placeholder="Nama Stroller & Kelengkapan" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white" />
+          </div>
+          <div class="col-span-5 sm:col-span-2">
+            <input type="text" value="${escapeAttr(item.unit)}" oninput="draftRentalCatalog[${idx}].unit = this.value"
+              placeholder="Hari / Paket" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white" />
+          </div>
+          <div class="col-span-5 sm:col-span-3">
+            <input type="number" min="0" value="${item.price}" oninput="draftRentalCatalog[${idx}].price = Number(this.value) || 0"
+              placeholder="Tarif (Rp)" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white" />
+          </div>
+          <div class="col-span-2 sm:col-span-1 text-right">
+            <button type="button" onclick="draftRentalCatalog.splice(${idx}, 1); renderRentalCatalogEditor();"
+              class="text-rose-600 hover:text-rose-800 font-bold text-base px-1.5">&times;</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addRentalCatalogRow() {
+      draftRentalCatalog.push({ name: '', unit: 'Hari', price: 35000 });
+      renderRentalCatalogEditor();
+    }
+
+    function renderLaundryCatalogEditor() {
+      const el = document.getElementById('cfg-laundry-catalog-list');
+      el.innerHTML = draftLaundryCatalog.map((item, idx) => `
+        <div class="grid grid-cols-12 gap-2 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+          <div class="col-span-12 sm:col-span-6">
+            <input type="text" value="${escapeAttr(item.name)}" oninput="draftLaundryCatalog[${idx}].name = this.value"
+              placeholder="Nama Layanan Laundry" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white" />
+          </div>
+          <div class="col-span-5 sm:col-span-2">
+            <input type="text" value="${escapeAttr(item.unit)}" oninput="draftLaundryCatalog[${idx}].unit = this.value"
+              placeholder="Kg / Pcs / Unit" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white" />
+          </div>
+          <div class="col-span-5 sm:col-span-3">
+            <input type="number" min="0" value="${item.price}" oninput="draftLaundryCatalog[${idx}].price = Number(this.value) || 0"
+              placeholder="Tarif (Rp)" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white" />
+          </div>
+          <div class="col-span-2 sm:col-span-1 text-right">
+            <button type="button" onclick="draftLaundryCatalog.splice(${idx}, 1); renderLaundryCatalogEditor();"
+              class="text-rose-600 hover:text-rose-800 font-bold text-base px-1.5">&times;</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addLaundryCatalogRow() {
+      draftLaundryCatalog.push({ name: '', unit: 'Kg', price: 8000 });
+      renderLaundryCatalogEditor();
+    }
+
+    function saveSettingsFromModal() {
+      config.profiles.laundry = {
+        name: document.getElementById('cfg-laundry-name').value.trim() || DEFAULT_CONFIG.profiles.laundry.name,
+        phone: document.getElementById('cfg-laundry-phone').value.trim() || DEFAULT_CONFIG.profiles.laundry.phone,
+        prefix: document.getElementById('cfg-laundry-prefix').value.trim() || 'LDR',
+        address: document.getElementById('cfg-laundry-address').value.trim() || DEFAULT_CONFIG.profiles.laundry.address,
+        notes: document.getElementById('cfg-laundry-notes').value.trim()
+      };
+
+      config.profiles.rental = {
+        name: document.getElementById('cfg-rental-name').value.trim() || DEFAULT_CONFIG.profiles.rental.name,
+        phone: document.getElementById('cfg-rental-phone').value.trim() || DEFAULT_CONFIG.profiles.rental.phone,
+        prefix: document.getElementById('cfg-rental-prefix').value.trim() || 'RNT',
+        address: document.getElementById('cfg-rental-address').value.trim() || DEFAULT_CONFIG.profiles.rental.address,
+        notes: document.getElementById('cfg-rental-notes').value.trim()
+      };
+
+      config.rentalCatalog = draftRentalCatalog.filter(x => x.name && x.name.trim());
+      config.laundryCatalog = draftLaundryCatalog.filter(x => x.name && x.name.trim());
+      if (!config.rentalCatalog.length) config.rentalCatalog = clone(DEFAULT_CONFIG.rentalCatalog);
+      if (!config.laundryCatalog.length) config.laundryCatalog = clone(DEFAULT_CONFIG.laundryCatalog);
+
+      const parfums = document.getElementById('cfg-parfum-list').value.split(',').map(s => s.trim()).filter(Boolean);
+      const guarantees = document.getElementById('cfg-guarantee-list').value.split(',').map(s => s.trim()).filter(Boolean);
+      if (parfums.length) config.parfums = parfums;
+      if (guarantees.length) config.guarantees = guarantees;
+
+      persistConfig();
+      populateDropdowns();
+      applyProfileForMode(currentMode);
+      renderNota();
+      closeSettingsModal();
+      alert('Semua pengaturan dan katalog berhasil disimpan!');
+    }
+
+    function exportBackupJSON() {
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        config,
+        history: getHistory()
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `kasirnota-backup-${toDateInputValue(new Date())}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importBackupJSON(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(String(reader.result));
+          if (data.config) {
+            config = {
+              profiles: {
+                laundry: { ...DEFAULT_CONFIG.profiles.laundry, ...(data.config.profiles?.laundry || {}) },
+                rental: { ...DEFAULT_CONFIG.profiles.rental, ...(data.config.profiles?.rental || {}) }
+              },
+              laundryCatalog: Array.isArray(data.config.laundryCatalog) && data.config.laundryCatalog.length ? data.config.laundryCatalog : clone(DEFAULT_CONFIG.laundryCatalog),
+              rentalCatalog: Array.isArray(data.config.rentalCatalog) && data.config.rentalCatalog.length ? data.config.rentalCatalog : clone(DEFAULT_CONFIG.rentalCatalog),
+              parfums: Array.isArray(data.config.parfums) && data.config.parfums.length ? data.config.parfums : [...DEFAULT_CONFIG.parfums],
+              guarantees: Array.isArray(data.config.guarantees) && data.config.guarantees.length ? data.config.guarantees : [...DEFAULT_CONFIG.guarantees]
+            };
+            persistConfig();
+          }
+          if (Array.isArray(data.history)) {
+            localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(data.history));
+            updateHistoryBadge();
+          }
+          populateDropdowns();
+          applyProfileForMode(currentMode);
+          renderNota();
+          closeSettingsModal();
+          alert('Backup berhasil dipulihkan!');
+        } catch {
+          alert('File JSON tidak valid.');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function resetDefaultConfig() {
+      if (!confirm('Kembalikan profil usaha, katalog stroller, dan layanan laundry ke pengaturan awal?')) return;
+      config = clone(DEFAULT_CONFIG);
+      persistConfig();
+      populateDropdowns();
+      applyProfileForMode(currentMode);
+      renderNota();
+      closeSettingsModal();
+      alert('Pengaturan dikembalikan ke default.');
+    }
+
+    /* HISTORY & WHATSAPP */
+    function getHistory() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY) || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function saveTransaction() {
+      const items = getItemsData();
+      const t = computeTotals(items);
+      const record = {
+        id: Date.now(),
+        savedAt: new Date().toISOString(),
+        mode: currentMode,
+        bizName: document.getElementById('biz-name').value.trim(),
+        bizPhone: document.getElementById('biz-phone').value.trim(),
+        bizAddress: document.getElementById('biz-address').value.trim(),
+        notaNo: document.getElementById('nota-no').value.trim(),
+        custName: document.getElementById('cust-name').value.trim(),
+        custPhone: document.getElementById('cust-phone').value.trim(),
+        laundryDateIn: document.getElementById('laundry-date-in').value,
+        laundryDateOut: document.getElementById('laundry-date-out').value,
+        laundryParfum: document.getElementById('laundry-parfum').value,
+        rentalStart: document.getElementById('rental-start').value,
+        rentalEnd: document.getElementById('rental-end').value,
+        rentalDays: t.rentalDays,
+        rentalGuarantee: document.getElementById('rental-guarantee').value,
+        rentalDeliveryMode: document.getElementById('rental-delivery-mode').value,
+        items,
+        discount: t.discount,
+        extraFee: t.extraFee,
+        paid: t.paid,
+        total: t.total,
+        status: document.getElementById('payment-status').value,
+        notes: document.getElementById('notes-input').value.trim()
+      };
+
+      const list = getHistory();
+      list.unshift(record);
+      localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(list.slice(0, 100)));
+      updateHistoryBadge();
+      alert(`Nota ${record.notaNo} berhasil disimpan ke riwayat!`);
+    }
+
+    function updateHistoryBadge() {
+      document.getElementById('history-count').textContent = getHistory().length;
+    }
+
+    function toggleHistoryModal() {
+      const modal = document.getElementById('history-modal');
+      const isHidden = modal.classList.contains('hidden');
+      if (isHidden) {
+        renderHistoryList();
+        modal.classList.remove('hidden');
+      } else {
+        modal.classList.add('hidden');
+      }
+    }
+
+    function renderHistoryList() {
+      const listEl = document.getElementById('history-list');
+      const history = getHistory();
+      if (!history.length) {
+        listEl.innerHTML = '<p class="text-center text-slate-400 text-sm py-8">Belum ada nota tersimpan.</p>';
+        return;
+      }
+
+      listEl.innerHTML = history.map((rec, idx) => `
+        <div class="p-4 rounded-xl border border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-mono-nota font-bold text-sm text-slate-900">${escapeHtml(rec.notaNo)}</span>
+              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full ${rec.mode === 'laundry' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'}">
+                ${rec.mode === 'laundry' ? 'Laundry' : 'Sewa'}
+              </span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">${escapeHtml(rec.status)}</span>
+            </div>
+            <div class="text-sm font-semibold text-slate-800 mt-1">${escapeHtml(rec.custName || 'Pelanggan Umum')} &bull; <span class="text-indigo-700">${formatRupiah(rec.total)}</span></div>
+            <div class="text-xs text-slate-500">${formatReadableDateTime(rec.savedAt)}</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="loadHistoryItem(${idx})" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold">Muat</button>
+            <button onclick="deleteHistoryItem(${idx})" class="px-2.5 py-1.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-semibold">Hapus</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function loadHistoryItem(idx) {
+      const rec = getHistory()[idx];
+      if (!rec) return;
+      currentMode = rec.mode || 'laundry';
+      switchMode(currentMode);
+
+      document.getElementById('biz-name').value = rec.bizName || '';
+      document.getElementById('biz-phone').value = rec.bizPhone || '';
+      document.getElementById('biz-address').value = rec.bizAddress || '';
+      document.getElementById('nota-no').value = rec.notaNo || '';
+      document.getElementById('cust-name').value = rec.custName || '';
+      document.getElementById('cust-phone').value = rec.custPhone || '';
+
+      if (rec.laundryDateIn) document.getElementById('laundry-date-in').value = rec.laundryDateIn;
+      if (rec.laundryDateOut) document.getElementById('laundry-date-out').value = rec.laundryDateOut;
+      if (rec.laundryParfum) document.getElementById('laundry-parfum').value = rec.laundryParfum;
+
+      if (rec.rentalStart) document.getElementById('rental-start').value = rec.rentalStart;
+      if (rec.rentalEnd) document.getElementById('rental-end').value = rec.rentalEnd;
+      if (rec.rentalDays) document.getElementById('rental-days').value = rec.rentalDays;
+      if (rec.rentalGuarantee) document.getElementById('rental-guarantee').value = rec.rentalGuarantee;
+      if (rec.rentalDeliveryMode) document.getElementById('rental-delivery-mode').value = rec.rentalDeliveryMode;
+
+      const container = document.getElementById('items-container');
+      container.innerHTML = '';
+      (rec.items || []).forEach(it => addItemRow(it));
+
+      document.getElementById('discount-input').value = rec.discount || 0;
+      document.getElementById('extra-fee-input').value = rec.extraFee || 0;
+      document.getElementById('paid-input').value = rec.paid || 0;
+      document.getElementById('payment-status').value = rec.status || 'LUNAS';
+      document.getElementById('notes-input').value = rec.notes || '';
+
+      renderNota();
+      toggleHistoryModal();
+    }
+
+    function deleteHistoryItem(idx) {
+      const list = getHistory();
+      list.splice(idx, 1);
+      localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(list));
+      updateHistoryBadge();
+      renderHistoryList();
+    }
+
+    function clearHistory() {
+      if (!confirm('Hapus semua riwayat nota tersimpan?')) return;
+      localStorage.removeItem(STORAGE_KEY_HISTORY);
+      updateHistoryBadge();
+      renderHistoryList();
+    }
+
+    function sendWhatsApp() {
+      const items = getItemsData();
+      const t = computeTotals(items);
+      const bizName = document.getElementById('biz-name').value.trim();
+      const notaNo = document.getElementById('nota-no').value.trim();
+      const custName = document.getElementById('cust-name').value.trim() || 'Pelanggan';
+      let rawPhone = document.getElementById('cust-phone').value.trim().replace(/[^0-9]/g, '');
+      if (rawPhone.startsWith('0')) rawPhone = '62' + rawPhone.slice(1);
+
+      const itemLines = items.map(it =>
+        `- ${it.name} (${it.qty} ${it.unit} x ${formatRupiah(it.price)}) = ${formatRupiah(it.subtotal)}`
+      ).join('
+');
+
+      let detailBlock = '';
+      if (currentMode === 'laundry') {
+        detailBlock =
+          `Masuk: ${formatReadableDateTime(document.getElementById('laundry-date-in').value)}
+` +
+          `Est. Selesai: ${formatReadableDateTime(document.getElementById('laundry-date-out').value)}
+` +
+          `Parfum: ${document.getElementById('laundry-parfum').value}
+`;
+      } else {
+        detailBlock =
+          `Periode: ${formatReadableDate(document.getElementById('rental-start').value)} s/d ${formatReadableDate(document.getElementById('rental-end').value)} (${t.rentalDays} Hari)
+` +
+          `Jaminan: ${document.getElementById('rental-guarantee').value}
+` +
+          `Pengambilan: ${document.getElementById('rental-delivery-mode').value}
+`;
+      }
+
+      const message =
+        `*${bizName}*
+` +
+        `No. Nota: *${notaNo}*
+` +
+        `Pelanggan: ${custName}
+` +
+        `----------------------------
+` +
+        detailBlock +
+        `----------------------------
+` +
+        `*Rincian:*
+${itemLines}
+` +
+        `----------------------------
+` +
+        `Total: *${formatRupiah(t.total)}*
+` +
+        `Dibayar: ${formatRupiah(t.paid)}
+` +
+        `Status: *${document.getElementById('payment-status').value}*
+
+` +
+        `Terima kasih!`;
+
+      const waUrl = rawPhone
+        ? `https://wa.me/${rawPhone}?text=${encodeURIComponent(message)}`
+        : `https://wa.me/?text=${encodeURIComponent(message)}`;
+
+      window.open(waUrl, '_blank');
+    }
+
+    function resetForm() {
+      document.getElementById('nota-no').value = generateNotaNumber(currentMode);
+      document.getElementById('cust-name').value = '';
+      document.getElementById('cust-phone').value = '';
+      document.getElementById('discount-input').value = 0;
+      document.getElementById('extra-fee-input').value = 0;
+      document.getElementById('paid-input').value = 0;
+      document.getElementById('payment-status').value = 'LUNAS';
+      applyProfileForMode(currentMode);
+
+      const now = new Date();
+      const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      document.getElementById('laundry-date-in').value = toDatetimeLocalValue(now);
+      document.getElementById('laundry-date-out').value = toDatetimeLocalValue(tomorrow);
+      document.getElementById('rental-start').value = toDateInputValue(now);
+      document.getElementById('rental-end').value = toDateInputValue(tomorrow);
+      document.getElementById('rental-days').value = 1;
+
+      resetItemsForMode(currentMode);
+      renderNota();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function escapeAttr(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    /* INIT */
+    (function init() {
+      populateDropdowns();
+      applyProfileForMode('laundry');
+      document.getElementById('nota-no').value = generateNotaNumber('laundry');
+
+      const now = new Date();
+      const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      document.getElementById('laundry-date-in').value = toDatetimeLocalValue(now);
+      document.getElementById('laundry-date-out').value = toDatetimeLocalValue(tomorrow);
+      document.getElementById('rental-start').value = toDateInputValue(now);
+      document.getElementById('rental-end').value = toDateInputValue(tomorrow);
+
+      resetItemsForMode('laundry');
+      updateHistoryBadge();
+      renderNota();
+    })();
+  </script>
+
+<script>
+(() => {
+  const APP_MENU_KEY = 'kasirnota_app_menu_v1';
+  const DEFAULT_APP_MENU = [
+    {id:'laundry', label:'Kasir Laundry', icon:'🧺', visible:true},
+    {id:'rental', label:'Persewaan', icon:'🛒', visible:true},
+    {id:'settings', label:'Pengaturan & Katalog', icon:'⚙️', visible:true},
+    {id:'history', label:'Riwayat Nota', icon:'📋', visible:true},
+    {id:'new', label:'Nota Baru', icon:'➕', visible:true}
+  ];
+  let appMenuDraft = [];
+  function getAppMenu(){
+    try { const v=JSON.parse(localStorage.getItem(APP_MENU_KEY)||'null'); return Array.isArray(v)&&v.length ? v : DEFAULT_APP_MENU.map(x=>({...x})); }
+    catch(e){ return DEFAULT_APP_MENU.map(x=>({...x})); }
+  }
+  function runAppMenu(id){
+    if(id==='laundry') switchMode('laundry');
+    if(id==='rental') switchMode('rental');
+    if(id==='settings') openSettingsModal();
+    if(id==='history') toggleHistoryModal();
+    if(id==='new') resetForm();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  function renderAppMenu(){
+    const root=document.getElementById('custom-app-menu'); if(!root) return;
+    const items=getAppMenu().filter(x=>x.visible);
+    root.innerHTML=items.map(x=>`<button type="button" onclick="runCustomAppMenu('${x.id}')" class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-indigo-50 px-2 py-3 text-sm font-semibold text-slate-700 flex flex-col items-center gap-1"><span class="text-xl">${escapeHtml(x.icon||'•')}</span><span>${escapeHtml(x.label)}</span></button>`).join('');
+  }
+  window.runCustomAppMenu=runAppMenu;
+  window.openAppMenuEditor=function(){
+    appMenuDraft=getAppMenu().map(x=>({...x})); renderAppMenuEditor();
+    document.getElementById('app-menu-editor').classList.remove('hidden');
+  };
+  window.closeAppMenuEditor=function(){document.getElementById('app-menu-editor').classList.add('hidden');};
+  function renderAppMenuEditor(){
+    const root=document.getElementById('app-menu-editor-list');
+    root.innerHTML=appMenuDraft.map((x,i)=>`<div class="border border-slate-200 rounded-xl p-3 grid grid-cols-12 gap-2 items-center">
+      <input aria-label="Ikon menu" class="col-span-2 border rounded-lg p-2 text-center" value="${escapeAttr(x.icon)}" maxlength="4" oninput="updateAppMenuDraft(${i},'icon',this.value)">
+      <input aria-label="Nama menu" class="col-span-6 border rounded-lg p-2 text-sm" value="${escapeAttr(x.label)}" oninput="updateAppMenuDraft(${i},'label',this.value)">
+      <label class="col-span-2 text-xs flex items-center gap-1"><input type="checkbox" ${x.visible?'checked':''} onchange="updateAppMenuDraft(${i},'visible',this.checked)"> Tampil</label>
+      <div class="col-span-2 flex gap-1"><button class="border rounded px-2 py-1" onclick="moveAppMenuDraft(${i},-1)" ${i===0?'disabled':''}>↑</button><button class="border rounded px-2 py-1" onclick="moveAppMenuDraft(${i},1)" ${i===appMenuDraft.length-1?'disabled':''}>↓</button></div>
+    </div>`).join('');
+  }
+  window.updateAppMenuDraft=(i,k,v)=>{appMenuDraft[i][k]=v;};
+  window.moveAppMenuDraft=(i,d)=>{const j=i+d;if(j<0||j>=appMenuDraft.length)return;[appMenuDraft[i],appMenuDraft[j]]=[appMenuDraft[j],appMenuDraft[i]];renderAppMenuEditor();};
+  window.saveAppMenuEditor=function(){
+    if(!appMenuDraft.some(x=>x.visible)){alert('Minimal satu menu harus ditampilkan.');return;}
+    localStorage.setItem(APP_MENU_KEY,JSON.stringify(appMenuDraft));renderAppMenu();closeAppMenuEditor();
+  };
+  window.resetAppMenuEditor=function(){appMenuDraft=DEFAULT_APP_MENU.map(x=>({...x}));renderAppMenuEditor();};
+  document.addEventListener('DOMContentLoaded',renderAppMenu);
+  if(document.readyState!=='loading') renderAppMenu();
+})();
+</script>
+
+</body>
+</html>
